@@ -85,7 +85,7 @@ tetris_block.SetBlock(6, [[0,-1], [1,-1], [0,0], [1,0]], [0,8], 0)
 tetris_block.SetBlock(7, [[0,-2], [0,-1], [0,0], [0,1]], [0,9], 1)
 tetris_block.SetBlock(7, [[-2,0], [-1,0], [0,0], [1,0]], [2,8], 0)
 tetris_block.SetBlock(7, [[0,-2], [0,-1], [0,0], [0,1]], [0,9], 1)
-tetris_block.SetBlock(7, [[-2,0], [-1,0], [0,0], [1,0]], [2,9], 0)
+tetris_block.SetBlock(7, [[-2,0], [-1,0], [0,0], [1,0]], [2,8], 0)
 
 #함수 생성
 def displayblock(): #블럭 불러오는 코드 (tetris_block.blocklist에서 기본 정보를 불러오고 중심점 (0,0)을 기준으로 블럭 좌표값 대입하여 블럭 위치 확정)
