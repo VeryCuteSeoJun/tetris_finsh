@@ -43,7 +43,6 @@ for i in range(0,10): #x좌표
 current_falling_block = 1 #현재 떨어지고 있는 블럭
 current_rotation = 1 #현재 떨어지고 있는 블럭의 회전 상태
 block_coordinate = [4,3] #떨어지고 있는 블럭 위치
-fall_period = 50 #50이 될 때마다 y좌표 감소wjatn 
 add_score = [0,100,300,700,1600] #점수 증가량
 realblock = [[0,0],[0,0],[0,0],[0,0]] #실제 블럭 위치
 block_log = [0,1,0,0,0,0,0,0] #각 블럭 등장 횟수 (블럭 고유 번호를 x라고 할 때 블럭이 나온 횟수는 block_log[x]로 호출하며, block_log[0]는 아무 의미 없는 칸으로 둠)
@@ -60,20 +59,31 @@ class Gene():
         self.Hole_Weight = []
         self.Bump_Weight = []
         self.Height_Weight = []
+        self.Height_Penalty = []
+        self.Penalty_Condition = []
+        self.Land_Type_Weight = []
         for i in range(0,50):
             self.Cleared_Line_Weight.append(random.randint(0,5000))
             self.Hole_Weight.append(random.randint(-5000,0))
             self.Bump_Weight.append(random.randint(-5000,0))
             self.Height_Weight.append(random.randint(-5000,0))
-            
-    def SetWeight(self,gene_num,a,b,c,d):
+            self.Land_Type_Weight.append([random.randint(0,20000),random.randint(0,20000),random.randint(0,20000)])
+            if random.randint(0,2)==0: self.Height_Penalty.append(0) 
+            else: self.Height_Penalty.append(random.randint(-50000,0))
+            self.Penalty_Condition.append(random.randint(2,14))
+    def SetWeight(self,gene_num,a,b,c,d,e,f,g):
         self.Cleared_Line_Weight[gene_num] = a
         self.Hole_Weight[gene_num] = b
         self.Bump_Weight[gene_num] = c
         self.Height_Weight[gene_num] = d
-
+        self.Height_Penalty[gene_num] = e
+        self.Penalty_Condition[gene_num] = f
+        for i in range(0,3): self.Land_Type_Weight[gene_num][i] = g[i]
 rand_gene = Gene()
 best_gene = Gene()
+rand_gene.SetWeight(0,852*5,-864*5,-156*5,-84*5,-10000,8,[-2500,-2500,-2500])
+rand_gene.SetWeight(1,852*5,-864*5,-156*5,-84*5,-7000,2,[-2500,-2500,-2500])
+rand_gene.SetWeight(2,852*5,-864*5,-156*5,-84*5,-25000,7,[-2500,-2500,-2500])
 
 scorelist = [0 for _ in range(50)]
 for i in range(50):
@@ -200,9 +210,9 @@ def block_create(): #블럭 생성
         block_log[same_P[i]]+=1
         return same_P[i]
 
-def NewGeneration(): #교배
+def NewGeneration(): #교차
     for i in range(0,5):
-        rand_gene.SetWeight(i,best_gene.Cleared_Line_Weight[i],best_gene.Hole_Weight[i],best_gene.Bump_Weight[i],best_gene.Height_Weight[i])
+        rand_gene.SetWeight(i,best_gene.Cleared_Line_Weight[i],best_gene.Hole_Weight[i],best_gene.Bump_Weight[i],best_gene.Height_Weight[i],best_gene.Height_Penalty[i],best_gene.Penalty_Condition[i],best_gene.Land_Type_Weight[i])
     for i in range(5,50):
         mom = random.randint(0,4)
         dad = random.randint(0,4)
@@ -210,9 +220,11 @@ def NewGeneration(): #교배
         parents = [mom,dad]
         mutation = random.randint(0,100)
         tend = random.randint(0,2)
-        if tend==0: proportion = [random.randint(0,33),random.randint(0,33),random.randint(0,33),random.randint(0,33)]
-        elif tend==1: proportion = [random.randint(34,76),random.randint(34,76),random.randint(34,76),random.randint(34,76)]
-        elif tend==2: proportion = [random.randint(77,100),random.randint(77,100),random.randint(77,100),random.randint(77,100)]
+        proportion=[]
+        for i in range(0,7):
+            if tend==0: proportion.append(random.randint(0,33))
+            elif tend==1: proportion.append(random.randint(34,76))
+            elif tend==2: proportion.append(random.randint(77,100))
         if mutation>=20:
             a = best_gene.Cleared_Line_Weight[mom]*proportion[0]+best_gene.Cleared_Line_Weight[dad]*(100-proportion[0])
             a/=100
@@ -226,20 +238,41 @@ def NewGeneration(): #교배
             d = best_gene.Height_Weight[mom]*proportion[3]+best_gene.Height_Weight[dad]*(100-proportion[3])
             d/=100
             new_height = int(d)
+            e = best_gene.Height_Penalty[mom]*proportion[4]+best_gene.Height_Penalty[dad]*(100-proportion[4])
+            e/=100
+            new_penalty = int(e)
+            f = best_gene.Penalty_Condition[mom]*proportion[5]+best_gene.Penalty_Condition[dad]*(100-proportion[5])
+            f/=100
+            new_standard = int(f)
+            g = [0,0,0]
+            new_ben = [0,0,0]
+            for i in range(0,3):
+                g[i] = best_gene.Land_Type_Weight[mom][i]*proportion[6]+best_gene.Land_Type_Weight[dad][i]*(100-proportion[6])
+                g[i]/=100
+                new_ben[i] = int(g[i])
         else:
             new_line = random.randint(0,5000)
             new_hole = random.randint(-5000,0)
             new_bump = random.randint(-5000,0)
             new_height = random.randint(-5000,0)
-        rand_gene.SetWeight(i,new_line,new_hole,new_bump,new_height)
+            if random.randint(0,2)==0: new_penalty=0
+            else: new_penalty = random.randint(-50000,0)
+            new_standard = random.randint(2,14)
+            new_ben=[0,0,0]
+            for i in range(0,3):
+                new_ben[i] = random.randint(0,20000)
+        rand_gene.SetWeight(i,new_line,new_hole,new_bump,new_height,new_penalty,new_standard,new_ben)
         
-def CalculateWeight(clear,hole,bump,height): #가중치 계산
+def CalculateWeight(clear,hole,bump,height,gap,shape): #가중치 계산
     if clear>=3:
         a=1
         for i in range(1,clear+1): a*=i
         clear = a
-    else:
-        return ((rand_gene.Cleared_Line_Weight[generation_number]*clear)+(rand_gene.Hole_Weight[generation_number]*hole)+(rand_gene.Bump_Weight[generation_number]*bump)+(rand_gene.Height_Weight[generation_number]*height))
+    b=0
+    if gap>=rand_gene.Penalty_Condition[generation_number]: b += rand_gene.Height_Penalty[generation_number]
+    for i in range(0,3):
+        if shape[i]: b += rand_gene.Land_Type_Weight[generation_number][i]
+    return (rand_gene.Cleared_Line_Weight[generation_number]*clear)+(rand_gene.Hole_Weight[generation_number]*hole)+(rand_gene.Bump_Weight[generation_number]*bump)+(rand_gene.Height_Weight[generation_number]*height)+b
 
 def Selection(): #선택
     for i in range(0,50):
@@ -250,8 +283,8 @@ def Selection(): #선택
         a=0
         while not scorelist[i]==originalscore[a]:
             a+=1
-        best_gene.SetWeight(i,rand_gene.Cleared_Line_Weight[a],rand_gene.Hole_Weight[a],rand_gene.Bump_Weight[a],rand_gene.Height_Weight[a])
-        print(i,": ",best_gene.Cleared_Line_Weight[i],best_gene.Hole_Weight[i],best_gene.Bump_Weight[i],best_gene.Height_Weight[i], end = ' ')
+        best_gene.SetWeight(i,rand_gene.Cleared_Line_Weight[a],rand_gene.Hole_Weight[a],rand_gene.Bump_Weight[a],rand_gene.Height_Weight[a],rand_gene.Height_Penalty[a],rand_gene.Penalty_Condition[a],rand_gene.Land_Type_Weight[a])
+        print(i,": ",best_gene.Cleared_Line_Weight[i],best_gene.Hole_Weight[i],best_gene.Bump_Weight[i],best_gene.Height_Weight[i],best_gene.Height_Penalty[i],best_gene.Penalty_Condition[i],best_gene.Land_Type_Weight[i],end = ' ')
         print("")
         
 #창 설정
@@ -307,6 +340,7 @@ while runcode:
             hole_num=0
             highest = []
             summit = 22
+            base = 4
             for x in range(0,10):
                 highest.append(22)
                 for y in range(5,22):
@@ -319,28 +353,31 @@ while runcode:
                             break
                     if nonrealboard[x][y]>0 and y<highest[x]: highest[x]=y
                 if highest[x]<summit: summit=highest[x]
-            #울퉁불퉁함(bumpiness) 계산
+                if highest[x]>base: base=highest[x]
+            #울퉁불퉁함(bumpiness) 계산 (구멍 깊으면 패널티)
             bumpy=0
             specific_land=[False,False,False]
             for x in range(0,9):
                 a=highest[x]-highest[x+1]
                 if a<0: a*=(-1)
                 if a==1: specific_land[0]=True
-                if a==-1: specific_land[1]=True
-                if a==0: specific_land[2]=True
+                elif a==-1: specific_land[1]=True
+                elif a==0: specific_land[2]=True
                 bumpy+=a
-            for i in range(0,3):
-                if specific_land[i]: bumpy-=3
             #칸 높이 계산
             summit*=(-1)
             summit+=22
+            base*=(-1)
+            base+=22
+            #차이 계산
+            biggest_gap = base-summit;
             #놓으면 게임 오버인지 판단
             for x in range(0,10):
                 if nonrealboard[x][4]>0:
                     temp_weight=-99999999  
                     break
             #가중치 계산
-            temp_weight+=CalculateWeight(temp_cleared_line,hole_num,bumpy,summit)
+            temp_weight+=CalculateWeight(temp_cleared_line,hole_num,bumpy,summit,biggest_gap,specific_land)
             if temp_weight > BestWeight:
                 Will_Placed[0] = rotate_type
                 Will_Placed[1] = move
@@ -406,14 +443,14 @@ while runcode:
             if board[x][h]>0 or endloop>=maxtime:
                 if printed_score>bestperform:
                     bestperform = printed_score
-                if played_games>=10:
+                if played_games>=5:
                     generation_number+=1
                     played_games=1
                 else:
                     played_games+=1
                 printed_score=0
                 endloop=0
-                if generation_number==50:
+                if generation_number==40:
                     Selection()
                     NewGeneration()
                     generation+=1
@@ -465,7 +502,7 @@ while runcode:
     #스코어 및 정보 표시
     score_text = font.render("Score : " + str(printed_score), True, BLACK)
     screen.blit(score_text,(300,75))
-    gen_text = font.render("Generation : " + str(generation) + "(" + str(generation_number+1) + "," + str(played_games) + ")", True, BLACK)
+    gen_text = font.render("Generation : " + str(generation) + "(" + str(generation_number) + "," + str(played_games) + ")", True, BLACK)
     screen.blit(gen_text,(300,170))
     best_text = font.render("Best Gene : " + str(bestperform), True, BLACK)
     screen.blit(best_text,(300,265))
