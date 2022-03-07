@@ -81,9 +81,6 @@ class Gene():
         for i in range(0,3): self.Land_Type_Weight[gene_num][i] = g[i]
 rand_gene = Gene()
 best_gene = Gene()
-rand_gene.SetWeight(0,852*5,-864*5,-156*5,-84*5,-10000,8,[-2500,-2500,-2500])
-rand_gene.SetWeight(1,852*5,-864*5,-156*5,-84*5,-7000,2,[-2500,-2500,-2500])
-rand_gene.SetWeight(2,852*5,-864*5,-156*5,-84*5,-25000,7,[-2500,-2500,-2500])
 
 scorelist = [0 for _ in range(50)]
 for i in range(50):
